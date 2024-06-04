@@ -14,7 +14,7 @@ bool hasEnding (std::string const &fullString, std::string const &ending) {
         return false;
     }
 }
-std::set<std::string> inputDrvs(std::string drv_path) {
+std::set<std::string> inputDrvs(std::string drv_path, bool ignoreNoneExist=false) {
     if (!hasEnding(drv_path, ".drv")) {
         std::cerr << "[Skipped] " << drv_path << " seems not a .drv file." << std::endl;
         return {};
@@ -25,8 +25,12 @@ std::set<std::string> inputDrvs(std::string drv_path) {
 
     std::ifstream file(drv_path);
     if (!file.is_open()) {
-        /* std::cerr << "Failed to open file: " << drv_path << std::endl; */
-        exit(-1);
+        if (ignoreNoneExist) {
+            return {};
+        } else {
+            std::cerr << "Failed to open file: " << drv_path << std::endl;
+            exit(-1);
+        }
     }
 
     std::ostringstream ss;
@@ -36,7 +40,7 @@ std::set<std::string> inputDrvs(std::string drv_path) {
     Derivation drv = parseDerivation(*store, ss.str(),"whatever", mockXpSettings);
     /* std::cerr << "size: " << drv.inputDrvs.map.size() << std::endl; */
     for (const auto &item : drv.inputDrvs.map) {
-        inputdrvs_path.insert(std::string(item.first.to_string()));
+        inputdrvs_path.insert("/nix/store/" + std::string(item.first.to_string()));
     }
 
     return inputdrvs_path;
@@ -47,6 +51,23 @@ std::set<std::string> inputDrvsFromSet(std::set<std::string> drvs_path) {
         inputdrvs_path.merge(inputDrvs(drv_path));
     }
     return inputdrvs_path;
+}
+std::set<std::string> inputDrvsFromSetRecursive(std::set<std::string> drvs_path) {
+    std::set<std::string> haveInspected = {};
+    std::set<std::string> toBeInspected = drvs_path;
+
+    while (!toBeInspected.empty()) {
+        std::string drv_path = *toBeInspected.begin();
+        toBeInspected.erase(toBeInspected.begin());
+        toBeInspected.merge(
+            inputDrvs(drv_path, true)
+        );
+        /* std::cerr << "[Inspected] " << drv_path << std::endl; */
+        haveInspected.insert(drv_path);
+        // TODO: set diff to reduce file reads
+    }
+
+    return haveInspected;
 }
 
 
@@ -66,10 +87,11 @@ int main(int argc, char **argv) {
 
     initNix();
 
-    std::set<std::string> inputdrvs_path = inputDrvsFromSet(
-        // convert vector to set
-        std::set(remaining_args.begin(), remaining_args.end())
-    );
+    // convert vector to set
+    std::set<std::string> drvs_path = std::set(remaining_args.begin(), remaining_args.end());
+    std::set<std::string> inputdrvs_path = recursive ?
+        inputDrvsFromSetRecursive(drvs_path) :
+        inputDrvsFromSet(drvs_path);
     for (std::string inputdrv_path : inputdrvs_path)
         std::cout << inputdrv_path << std::endl;
 
