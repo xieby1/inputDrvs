@@ -1,4 +1,3 @@
-#define SYSTEM "x86_64-linux"
 #include "nix/derivations.hh"
 #include "nix/store-api.hh"
 #include "nix/shared.hh"

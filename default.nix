@@ -12,6 +12,7 @@ stdenv.mkDerivation {
     nlohmann_json
   ];
   makeFlags = [
+    "SYSTEM=${stdenv.system}"
     "PREFIX=$(out)"
   ];
 }
