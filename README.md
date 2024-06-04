@@ -6,24 +6,33 @@ This tiny tool can extract `inputDrvs` from derivations (.drv) file.
 
 ```bash
 nix-build ./package.nix
-# test
-nix-instantiate
-./result/bin/inputDrvs /nix/store/replace-with-instantiated-drv-xx-test-inputDrvs.drv
+```
+
+Or, import to your nix config, take home-manager for an instance:
+
+```nix
+home.packages = [
+  (pkgs.callPackage (builtins.fetchTarball {
+    url = "https://github.com/xieby1/inputDrvs/archive/74e1cced80a7c5b0c3c9ad0ae91bf782570d1de8.tar.gz";
+    sha256 = "11pfvv5bxl1b1w4cjsncy5w5r7y3xyjin2bhbkib2q2q2i8vwk0k";
+  }) {})
+];
 ```
 
 ## Usage
 
-```bash
-inputDrvs xxx.drv yyy.drv zzz.drv ...
-```
-
-It will print these derivations' direct inputDrvs.
-
-```bash
-inputDrvs -r xxx.drv yyy.drv zzz.drv ...
-```
-
-It will recursively print these derivations inputDrvs.
+* run test
+  ```bash
+  inputDrvs -r $(nix-instantiate ./test.nix)
+  ```
+* print multiple derivations' inputDrvs.
+  ```bash
+  inputDrvs -r xxx.drv yyy.drv zzz.drv ...
+  ```
+* calculate hello's inputDrvs size
+  ```bash
+  du -chd0 $(inputDrvs -r $(nix-instantiate '<nixpkgs>' -A hello))
+  ```
 
 ## Why nix does not provide `inputDrvs` in nix expression? E.g. pkgs.hello.inputDrvs.
 
@@ -72,6 +81,22 @@ They are incomplete for 2 reasons:
   The basic derivation mechanism is `builtins.derivation`.
 * Beyond these nix variables, the packages used in any nix variables should be regarded as dependencies.
   For example, [test.nix](./test.nix), the packages in builder script.
+
+### TODO: nix-store command
+
+Quite similar to my demands!
+
+`man nix-store-query`
+
+```bash
+Print the build-time dependencies of svn:
+
+$ nix-store --query --requisites $(nix-store --query --deriver $(which svn))
+/nix/store/02iizgn86m42q905rddvg4ja975bk2i4-grep-2.5.1.tar.bz2.drv
+/nix/store/07a2bzxmzwz5hp58nf03pahrv2ygwgs3-gcc-wrapper.sh
+/nix/store/0ma7c9wsbaxahwwl04gbw3fcd806ski4-glibc-2.3.4.drv
+... lots of other paths ...
+```
 
 ## Related information
 
