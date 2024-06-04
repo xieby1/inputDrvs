@@ -1,27 +1,44 @@
 #include "nix/derivations.hh"
 #include "nix/store-api.hh"
 #include "nix/shared.hh"
+#include "CLI/CLI.hpp"
 #include <iostream>
 
 using namespace nix;
 
-int main(void) {
+int main(int argc, char **argv) {
+    CLI::App app{"inputDrvs"};
+
+    bool recursive{false};
+    app.add_flag("-r,--recursive", recursive, "Recursive find all existing inputDrvs");
+    app.allow_extras();
+
+    CLI11_PARSE(app, argc, argv);
+
+    // TODO: remove
+    std::cerr << "recursive: " << recursive << std::endl;
+
+    std::vector<std::string> remaining_args = app.remaining(true);
+
     initNix();
 
     ref<Store> store(openStore("dummy://"));
     ExperimentalFeatureSettings mockXpSettings;
-    Derivation drv = parseDerivation(
-        *store,
-        R"(Derive([("debug","/nix/store/6mp26df87rfa6fz9g49hn0cz7k727mg2-nix-2.18.2-debug","",""),("dev","/nix/store/9kk8q8gw1ib43yxlhi1nkvbyhdbk4mdd-nix-2.18.2-dev","",""),("doc","/nix/store/gfqkfb5ds5rvgvq75mwkf0snn394yq70-nix-2.18.2-doc","",""),("man","/nix/store/0354j8bh8qrvynaj4f6mpqwbshcr22kr-nix-2.18.2-man","",""),("out","/nix/store/j7rp0y3ii1w3dlbflbxlv4g7hbaaz3bs-nix-2.18.2","","")],[("/nix/store/1jnqdx87709qz3x81gjqkjkgkcl5xl2q-libseccomp-2.5.5.drv",["dev"]),("/nix/store/2alwbzpq6bqs906zkaf424sgnc33w2m2-sqlite-3.45.3.drv",["dev"]),("/nix/store/7hw9ylagm91lf83nrkj198fg80yw7vk3-flex-2.6.4.drv",["out"]),("/nix/store/82ngayjkqkh507l9a5pir8yrvdyfy4ix-editline-1.17.1.drv",["dev"]),("/nix/store/a29gy53p8mzxq7mddl9f60ccm1rhl56g-aws-sdk-cpp-1.11.318.drv",["dev"]),("/nix/store/crz7gx18rips6nsz6l08f3h179czk9hx-source.drv",["out"]),("/nix/store/cxsx9m8fm6n1fwbdi594rlvqmaqp7dch-stdenv-linux.drv",["out"]),("/nix/store/d1cfhgg8aspwf95mfccgv87f8ak0dxlf-gtest-1.14.0.drv",["dev"]),("/nix/store/dhcvwkcjy3mzvgsmr6inf1bhfk7zlsgf-xz-5.4.6.drv",["dev"]),("/nix/store/f7grv2bn5h1mb7l08vr64v89k18c7jcy-rapidcheck-0-unstable-2023-12-14.drv",["dev"]),("/nix/store/ga6m37x9xcb069dkq0gzv4nzhrf2mq21-jq-1.7.1.drv",["dev"]),("/nix/store/gcq6a5xqfmgv0fiszrvl0smb2z3v87gs-brotli-1.1.0.drv",["dev"]),("/nix/store/i2vckaz1ls20602kmx74fal6h433w6qg-busybox-static-x86_64-unknown-linux-musl-1.36.1.drv",["out"]),("/nix/store/i7865ifs5848jk89q5bzwlskfdgcfii2-boost-1.81.0.drv",["dev","out"]),("/nix/store/inacnl5j5ik3m33xndwv580gydg00bcs-autoreconf-hook.drv",["out"]),("/nix/store/jp0nyb9npxsggfxmmkzar1hj0y2vf48k-libarchive-3.7.4.drv",["dev"]),("/nix/store/l7b4xasr1yk2np22cl9f5k38z9yapsfp-curl-8.7.1.drv",["dev"]),("/nix/store/lqazrqrhj44k3pklcbfr2455knbmavxg-gcc-13.2.0.drv",["lib"]),("/nix/store/m1vnszpxgy8xszy656vf2bf4f9l5372k-autoconf-archive-2023.02.20.drv",["out"]),("/nix/store/n78ymn1jjgyiyngmlijy0gm87d5xw16d-util-linux-minimal-2.40.1.drv",["dev"]),("/nix/store/nmfg25zz8iyi6qr52lpixk5dmyz1f6fl-bzip2-1.0.8.drv",["dev"]),("/nix/store/payr7xiv3fapx8xp3hkjmz7jbbrnbhbp-bison-3.8.2.drv",["out"]),("/nix/store/qzh1r3pa2z0sn7jdj6nm8s2dzl2klhfq-libcpuid-0.6.5.drv",["out"]),("/nix/store/r2i0pinsmr3saz0sp9ddsgzv6w9l22xq-mdbook-linkcheck-0.7.7.drv",["out"]),("/nix/store/r7qgbla522wbjiam1m68ayv0r29bdzf0-nlohmann_json-3.11.3.drv",["out"]),("/nix/store/rr9xr8km0aanlf2hadsczy29ikcbx500-bash-5.2p26.drv",["out"]),("/nix/store/shsml31vs10jkbqj6mjfjif5chvb4y21-lowdown-1.1.0.drv",["dev","out"]),("/nix/store/v3h7gflnvqkdi0yjzr24mr4xm1r4jifk-libsodium-1.0.19.drv",["dev"]),("/nix/store/xx058xghr9zas6ik2k370lvfzb8p926p-mdbook-0.4.37.drv",["out"]),("/nix/store/y22036llk78asrhr0ddr0kai18mn3bib-pkg-config-wrapper-0.29.2.drv",["out"]),("/nix/store/za9d4zs34dw0lq4n6ndki57w16cb9znl-boehm-gc-8.2.6.drv",["dev"]),("/nix/store/zdxzplhgm0bnh63c92fh8jhgq3mir64r-openssl-3.0.13.drv",["dev"])],["/nix/store/12l2v3kmacnpmx14p2345kk41fpv31rw-separate-debug-info.sh","/nix/store/v6x3cs394jgqfbi0a42pam708flxaphh-default-builder.sh"],"x86_64-linux","/nix/store/306znyj77fv49kwnkpxmb0j2znqpa8bj-bash-5.2p26/bin/bash",["-e","/nix/store/v6x3cs394jgqfbi0a42pam708flxaphh-default-builder.sh"],[("NIX_HARDENING_ENABLE","bindnow format fortify fortify3 pic relro stackprotector strictoverflow pie"),("VERSION_SUFFIX",""),("__structuredAttrs",""),("buildInputs","/nix/store/ywac4cc4ls0nckfpbc5w2wfrd27sxrlh-boost-1.81.0-dev /nix/store/62fdhzhrs5smykxkxvjhw3y6yck2iih4-brotli-1.1.0-dev /nix/store/5yqz7al0lv1jhkmbka3ghswqk5wlxvq5-bzip2-1.0.8-dev /nix/store/jvg1wiw83sxhx7bmhwyqhw9ygags4gwq-curl-8.7.1-dev /nix/store/wizkydp08af4vr853svkwv3szic36q8c-editline-1.17.1-dev /nix/store/7rmsqqcarg5rzf4lbij3sdja7d0fn11w-libsodium-1.0.19-dev /nix/store/191vca5vdxdlr32k2hpzd66mic98930f-openssl-3.0.13-dev /nix/store/62nn1zqbjs0f6y382mkg0g0mb9pg2kqa-sqlite-3.45.3-dev /nix/store/iwfarfldqql8cnhkcm5j9bhb4bbi5giy-xz-5.4.6-dev /nix/store/ikmzrr3a8gd4jx31lkdhx7bk045j16fi-gtest-1.14.0-dev /nix/store/rzgvn292q4wxi9p73inx8v7jqp5qfijc-libarchive-3.7.4-dev /nix/store/zij437icdrq28cdhq179rpy8xxanax4n-lowdown-1.1.0-dev /nix/store/qkpm3v8q7h6j79hhhvvh3swp6kl59ssy-libcpuid-0.6.5 /nix/store/wpcqc0yflv8kfqgb8hr320by7aj2qnrp-rapidcheck-0-unstable-2023-12-14-dev /nix/store/xcgj52srzlnchnqilblrih0sxdw0ykhf-libseccomp-2.5.5-dev /nix/store/jrgc47p275k2c8nqw6w7rjsjh60nrgbb-aws-sdk-cpp-1.11.318-dev"),("builder","/nix/store/306znyj77fv49kwnkpxmb0j2znqpa8bj-bash-5.2p26/bin/bash"),("cmakeFlags",""),("configureFlags","--with-store-dir=/nix/store --localstatedir=/nix/var --sysconfdir=/etc --enable-gc --with-sandbox-shell=/nix/store/v35p0wxs6wkzs44wpndczh85qyw808am-busybox-static-x86_64-unknown-linux-musl-1.36.1/bin/busybox --enable-lto"),("debug","/nix/store/6mp26df87rfa6fz9g49hn0cz7k727mg2-nix-2.18.2-debug"),("depsBuildBuild",""),("depsBuildBuildPropagated",""),("depsBuildTarget",""),("depsBuildTargetPropagated",""),("depsHostHost",""),("depsHostHostPropagated",""),("depsTargetTarget",""),("depsTargetTargetPropagated",""),("dev","/nix/store/9kk8q8gw1ib43yxlhi1nkvbyhdbk4mdd-nix-2.18.2-dev"),("doCheck",""),("doInstallCheck","1"),("doc","/nix/store/gfqkfb5ds5rvgvq75mwkf0snn394yq70-nix-2.18.2-doc"),("enableParallelBuilding","1"),("enableParallelChecking","1"),("enableParallelInstalling","1"),("hardeningDisable",""),("hardeningEnable","pie"),("installCheckTarget","installcheck"),("installFlags","sysconfdir=$(out)/etc"),("makeFlags","--jobserver-style=pipe profiledir=$(out)/etc/profile.d"),("man","/nix/store/0354j8bh8qrvynaj4f6mpqwbshcr22kr-nix-2.18.2-man"),("mesonFlags",""),("name","nix-2.18.2"),("nativeBuildInputs","/nix/store/zdvrzlvzbn9ymb0z8na50w995j8np16z-pkg-config-wrapper-0.29.2 /nix/store/l92yxzbafga5ygvabd3h4yqgrc1jj1y4-autoconf-archive-2023.02.20 /nix/store/2bx07vad8gfbs8kdsx0ylxhla715ay7x-autoreconf-hook /nix/store/abm55q8k9lsbz7kv2v68ns7hkdks2v2q-bison-3.8.2 /nix/store/z1fkfc5ca0rra7m5zrh8i92mx18w9i00-flex-2.6.4 /nix/store/n5chc8i5za5jrr4biwwgx7a96p0a7aq9-jq-1.7.1-dev /nix/store/8g48danvyl01ja2ampjh9w8q3m2brfrv-lowdown-1.1.0 /nix/store/vy1qxci0jz1b2j24s3cjvjzpq8i68l2b-mdbook-0.4.37 /nix/store/vp6lrqr4gq3cgcrs6szf4yn7474d1qx5-mdbook-linkcheck-0.7.7 /nix/store/sw3a1cypmpgh8gvlhhxby0wl9f80wg53-util-linux-minimal-2.40.1-dev /nix/store/12l2v3kmacnpmx14p2345kk41fpv31rw-separate-debug-info.sh"),("out","/nix/store/j7rp0y3ii1w3dlbflbxlv4g7hbaaz3bs-nix-2.18.2"),("outputs","out dev man doc debug"),("patches",""),("pname","nix"),("postPatch","patchShebangs --build tests\n"),("preConfigure","mkdir -p $out/lib\ncp -pd /nix/store/62sh2bwllmkl8zzpqhglzgpk7lmsmrsa-boost-1.81.0/lib/{libboost_context*,libboost_thread*,libboost_system*} $out/lib\nrm -f $out/lib/*.a\nchmod u+w $out/lib/*.so.*\npatchelf --set-rpath $out/lib:/nix/store/xvzz97yk73hw03v5dhhz3j47ggwf1yq1-gcc-13.2.0-lib/lib $out/lib/libboost_thread.so.*\n\n"),("preInstallCheck",""),("propagatedBuildInputs","/nix/store/kkys82gxxnppqz2i1v02wdcp8gmw2n1m-boehm-gc-8.2.6-dev /nix/store/mafwrbrcqq4i92lq5ypgq3mka0wwn9vp-nlohmann_json-3.11.3"),("propagatedNativeBuildInputs",""),("separateDebugInfo","1"),("src","/nix/store/67dgnvlh1wngb99v74lh987laf1c58vv-source"),("stdenv","/nix/store/xfhkjnpqjwlf6hlk1ysmq3aaq80f3bjj-stdenv-linux"),("strictDeps",""),("system","x86_64-linux"),("version","2.18.2")]))",
-        "whatever",
-        mockXpSettings
-    );
+    for (std::string arg : remaining_args) {
+        std::ifstream file(arg);
+        if (!file.is_open()) {
+            std::cerr << "Failed to open file: " << arg << std::endl;
+            exit(-1);
+        }
+        std::ostringstream ss;
+        ss << file.rdbuf();
 
-    std::cout << "size: " << drv.inputDrvs.map.size() << std::endl;
-
-    for (const auto & [k, v] : drv.inputDrvs.map)
-        std::cout << k.to_string() << std::endl;
-        /* std::cout << '[' << k.string << "] = " << v << "; " << std::endl; */
+        Derivation drv = parseDerivation(*store, ss.str(),"whatever", mockXpSettings);
+        std::cerr << "size: " << drv.inputDrvs.map.size() << std::endl;
+        for (const auto &item : drv.inputDrvs.map) {
+            std::cout << item.first.to_string() << std::endl;
+        }
+    }
 
     return 0;
 }

@@ -2,6 +2,7 @@
 , nix
 , boost
 , nlohmann_json
+, cli11
 }:
 stdenv.mkDerivation {
   name = "inputDrvs";
@@ -10,6 +11,7 @@ stdenv.mkDerivation {
     nix
     boost
     nlohmann_json
+    cli11
   ];
   makeFlags = [
     "SYSTEM=${stdenv.system}"
