@@ -76,3 +76,5 @@ They are incomplete for 2 reasons:
 ## Related information
 
 * [NixOS Discourse: Any way to get a derivation’s inputDrvs from within Nix?](https://discourse.nixos.org/t/any-way-to-get-a-derivations-inputdrvs-from-within-nix/7212)
+  * [GitHub: NixOS/nix issues: How to get the build-time dependencies of a package?](https://github.com/NixOS/nix/issues/1245#issuecomment-401642781)
+* [Reddit: NixOS: How do derivations know the `inputDrvs`?](https://www.reddit.com/r/NixOS/comments/ooe7yc/how_do_derivations_know_the_inputdrvs/)
