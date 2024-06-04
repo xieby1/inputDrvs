@@ -64,7 +64,14 @@ std::set<std::string> inputDrvsFromSetRecursive(std::set<std::string> drvs_path)
         );
         /* std::cerr << "[Inspected] " << drv_path << std::endl; */
         haveInspected.insert(drv_path);
-        // TODO: set diff to reduce file reads
+        // toBeInspected - haveInspected: to reduce file reads
+        std::set<std::string> newToBeInspected;
+        std::set_difference(
+            toBeInspected.begin(), toBeInspected.end(),
+            haveInspected.begin(), haveInspected.end(),
+            std::inserter(newToBeInspected, newToBeInspected.begin())
+        );
+        toBeInspected = newToBeInspected;
     }
 
     return haveInspected;
