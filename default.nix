@@ -12,8 +12,6 @@ stdenv.mkDerivation {
     nlohmann_json
   ];
   makeFlags = [
-    "NIX_SRC=${nix.src}"
-    "NIX_OUT=${nix.out}"
     "PREFIX=$(out)"
   ];
 }

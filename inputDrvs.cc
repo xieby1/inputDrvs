@@ -1,7 +1,7 @@
 #define SYSTEM "x86_64-linux"
-#include "derivations.hh"
-#include "store-api.hh"
-#include "shared.hh"
+#include "nix/derivations.hh"
+#include "nix/store-api.hh"
+#include "nix/shared.hh"
 #include <iostream>
 
 using namespace nix;
