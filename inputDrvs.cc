@@ -3,6 +3,7 @@
 #include "nix/shared.hh"
 #include "CLI/CLI.hpp"
 #include <iostream>
+#include <filesystem>
 
 using namespace nix;
 
@@ -77,12 +78,47 @@ std::set<std::string> inputDrvsFromSetRecursive(std::set<std::string> drvs_path)
     return haveInspected;
 }
 
+std::set<std::string> outPaths(std::string drv_path, bool ignoreNoneExist=false) {
+    ref<Store> store(openStore("dummy://"));
+    ExperimentalFeatureSettings mockXpSettings;
+
+    std::ifstream file(drv_path);
+    if (!file.is_open()) {
+        if (ignoreNoneExist) {
+            return {};
+        } else {
+            std::cerr << "Failed to open file: " << drv_path << std::endl;
+            exit(-1);
+        }
+    }
+
+    std::ostringstream ss;
+    ss << file.rdbuf();
+
+    std::set<std::string> inputdrvs_path;
+    Derivation drv = parseDerivation(*store, ss.str(),"whatever", mockXpSettings);
+    /* std::cerr << "size: " << drv.inputDrvs.map.size() << std::endl; */
+    for (const auto &item : drv.outputs) {
+        if (std::holds_alternative<DerivationOutput::InputAddressed>(item.second.raw)) {
+            std::string path = "/nix/store/" + std::string(
+                std::get<DerivationOutput::InputAddressed>(item.second.raw).path.to_string()
+            );
+            if (std::filesystem::exists(path)) {
+                inputdrvs_path.insert(path);
+            }
+        } // else TODO: types of outputs
+    }
+
+    return inputdrvs_path;
+}
 
 int main(int argc, char **argv) {
     CLI::App app{"inputDrvs"};
 
     bool recursive{false};
     app.add_flag("-r,--recursive", recursive, "Recursive find all existing inputDrvs");
+    bool drv{false};
+    app.add_flag("-d,--drv", drv, "Output drv file path, instead of drv's outPath");
     app.allow_extras();
 
     CLI11_PARSE(app, argc, argv);
@@ -99,8 +135,16 @@ int main(int argc, char **argv) {
     std::set<std::string> inputdrvs_path = recursive ?
         inputDrvsFromSetRecursive(drvs_path) :
         inputDrvsFromSet(drvs_path);
-    for (std::string inputdrv_path : inputdrvs_path)
-        std::cout << inputdrv_path << std::endl;
+    if (drv) {
+        for (std::string inputdrv_path : inputdrvs_path)
+            std::cout << inputdrv_path << std::endl;
+    } else {
+        std::set<std::string> out_paths;
+        for (std::string inputdrv_path : inputdrvs_path)
+            out_paths.merge(outPaths(inputdrv_path));
+        for (std::string out_path : out_paths)
+            std::cout << out_path << std::endl;
+    }
 
     return 0;
 }
