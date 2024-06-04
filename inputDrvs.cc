@@ -6,6 +6,50 @@
 
 using namespace nix;
 
+// https://stackoverflow.com/questions/874134/find-out-if-string-ends-with-another-string-in-c
+bool hasEnding (std::string const &fullString, std::string const &ending) {
+    if (fullString.length() >= ending.length()) {
+        return (0 == fullString.compare (fullString.length() - ending.length(), ending.length(), ending));
+    } else {
+        return false;
+    }
+}
+std::set<std::string> inputDrvs(std::string drv_path) {
+    if (!hasEnding(drv_path, ".drv")) {
+        std::cerr << "[Skipped] " << drv_path << " seems not a .drv file." << std::endl;
+        return {};
+    }
+
+    ref<Store> store(openStore("dummy://"));
+    ExperimentalFeatureSettings mockXpSettings;
+
+    std::ifstream file(drv_path);
+    if (!file.is_open()) {
+        /* std::cerr << "Failed to open file: " << drv_path << std::endl; */
+        exit(-1);
+    }
+
+    std::ostringstream ss;
+    ss << file.rdbuf();
+
+    std::set<std::string> inputdrvs_path;
+    Derivation drv = parseDerivation(*store, ss.str(),"whatever", mockXpSettings);
+    /* std::cerr << "size: " << drv.inputDrvs.map.size() << std::endl; */
+    for (const auto &item : drv.inputDrvs.map) {
+        inputdrvs_path.insert(std::string(item.first.to_string()));
+    }
+
+    return inputdrvs_path;
+}
+std::set<std::string> inputDrvsFromSet(std::set<std::string> drvs_path) {
+    std::set<std::string> inputdrvs_path;
+    for (std::string drv_path : drvs_path) {
+        inputdrvs_path.merge(inputDrvs(drv_path));
+    }
+    return inputdrvs_path;
+}
+
+
 int main(int argc, char **argv) {
     CLI::App app{"inputDrvs"};
 
@@ -16,29 +60,18 @@ int main(int argc, char **argv) {
     CLI11_PARSE(app, argc, argv);
 
     // TODO: remove
-    std::cerr << "recursive: " << recursive << std::endl;
+    /* std::cerr << "recursive: " << recursive << std::endl; */
 
     std::vector<std::string> remaining_args = app.remaining(true);
 
     initNix();
 
-    ref<Store> store(openStore("dummy://"));
-    ExperimentalFeatureSettings mockXpSettings;
-    for (std::string arg : remaining_args) {
-        std::ifstream file(arg);
-        if (!file.is_open()) {
-            std::cerr << "Failed to open file: " << arg << std::endl;
-            exit(-1);
-        }
-        std::ostringstream ss;
-        ss << file.rdbuf();
-
-        Derivation drv = parseDerivation(*store, ss.str(),"whatever", mockXpSettings);
-        std::cerr << "size: " << drv.inputDrvs.map.size() << std::endl;
-        for (const auto &item : drv.inputDrvs.map) {
-            std::cout << item.first.to_string() << std::endl;
-        }
-    }
+    std::set<std::string> inputdrvs_path = inputDrvsFromSet(
+        // convert vector to set
+        std::set(remaining_args.begin(), remaining_args.end())
+    );
+    for (std::string inputdrv_path : inputdrvs_path)
+        std::cout << inputdrv_path << std::endl;
 
     return 0;
 }
