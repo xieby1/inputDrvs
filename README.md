@@ -72,3 +72,7 @@ They are incomplete for 2 reasons:
   The basic derivation mechanism is `builtins.derivation`.
 * Beyond these nix variables, the packages used in any nix variables should be regarded as dependencies.
   For example, [test.nix](./test.nix), the packages in builder script.
+
+## Related information
+
+* [NixOS Discourse: Any way to get a derivation’s inputDrvs from within Nix?](https://discourse.nixos.org/t/any-way-to-get-a-derivations-inputdrvs-from-within-nix/7212)
